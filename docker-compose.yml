@@ -91,7 +91,7 @@ services:
       - ollama
     networks:
       - unlp_network
-    entrypoint: [ "sh", "-c", "echo 'Esperando a que Ollama responda...' && until curl -s http://ollama:11434/ > /dev/null; do sleep 2; done; echo 'Descargando modelo llama3.2:3b...' && curl -s http://ollama:11434/api/pull -d '{\"name\": \"llama3.2:3b\", \"stream\": false}'" ]
+    entrypoint: [ "sh", "-c", "echo 'Esperando a que Ollama responda...' && until curl -s http://ollama:11434/ > /dev/null; do sleep 2; done; echo 'Descargando modelo llama3.2...' && curl -s http://ollama:11434/api/pull -d '{\"name\": \"llama3.2:latest\", \"stream\": false}'" ]
 
 networks:
   unlp_network:
