@@ -92,7 +92,7 @@ qdrant | Qdrant gRPC listening on 6334
 
 Verificá que los servicios estén activos:
 
-- **Flask** → http://localhost:5000
+- **Flask** → http://localhost:5000 (usuario: `admin@gmail.com` / contraseña: `admin123`)
 - **N8n** → http://localhost:5678 (usuario: `admin` / contraseña: `admin123`)
 - **Qdrant** → http://localhost:6333/dashboard
 
