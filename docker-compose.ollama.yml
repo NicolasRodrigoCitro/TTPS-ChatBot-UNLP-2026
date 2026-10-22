@@ -1,0 +1,42 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    networks:
+      - ollama_network
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+
+  ollama-init:
+    image: curlimages/curl
+    container_name: ollama-init
+    depends_on:
+      - ollama
+    networks:
+      - ollama_network
+    environment:
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:latest}
+      - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo 'Esperando a que Ollama responda...'
+        until curl -s http://ollama:11434/ > /dev/null; do
+          sleep 2
+        done
+        echo "Descargando modelo de chat $$OLLAMA_MODEL ..."
+        curl -s "http://ollama:11434/api/pull" \
+          -d "{\"name\":\"$$OLLAMA_MODEL\",\"stream\":false}"
+        echo "Descargando modelo de embeddings $$OLLAMA_EMBEDDING_MODEL ..."
+        curl -s "http://ollama:11434/api/pull" \
+          -d "{\"name\":\"$$OLLAMA_EMBEDDING_MODEL\",\"stream\":false}"
+        echo 'Listo!'
+
+networks:
+  ollama_network:
+    driver: bridge

@@ -1,6 +1,6 @@
 services:
   flask:
-    build: 
+    build:
       context: ./backend-flask
       dockerfile: Dockerfile
     container_name: flask
@@ -22,6 +22,10 @@ services:
       - N8N_WEBHOOK_PDF=${N8N_WEBHOOK_PDF}
       - WHATSAPP_TOKEN=${WHATSAPP_TOKEN}
       - PHONE_NUMBER_ID=${PHONE_NUMBER_ID}
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:latest}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./data:/app/data
     networks:
@@ -55,6 +59,8 @@ services:
       - N8N_BASIC_AUTH_PASSWORD=admin123
       - N8N_HOST=localhost
       - N8N_PORT=5678
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./n8n/data:/home/node/.n8n
     networks:
@@ -73,25 +79,6 @@ services:
       - ./n8n/qdrant_data:/qdrant/storage:z
     networks:
       - unlp_network
-      
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ./ollama_data:/root/.ollama
-    networks:
-      - unlp_network
-
-  ollama-init:
-    image: curlimages/curl
-    container_name: ollama-init
-    depends_on:
-      - ollama
-    networks:
-      - unlp_network
-    entrypoint: [ "sh", "-c", "echo 'Esperando a que Ollama responda...' && until curl -s http://ollama:11434/ > /dev/null; do sleep 2; done; echo 'Descargando modelo llama3.2...' && curl -s http://ollama:11434/api/pull -d '{\"name\": \"llama3.2:latest\", \"stream\": false}'" ]
 
 networks:
   unlp_network:
