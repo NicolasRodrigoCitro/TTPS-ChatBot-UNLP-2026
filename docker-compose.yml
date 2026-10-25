@@ -4,24 +4,28 @@ services:
       context: ./backend-flask
       dockerfile: Dockerfile
     container_name: flask
+    profiles:
+      - ""
     ports:
       - "5000:5000"
     environment:
-      - HUGGINGFACE_API_TOKEN=${HUGGINGFACE_API_TOKEN}
       - SECRET_KEY=${SECRET_KEY}
+      
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - DB_HOST=postgres
       - DB_PORT=5432
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      
       - QDRANT_URL=http://qdrant:6333
+      
       - N8N_HOST=${N8N_HOST}
       - N8N_URL=${N8N_URL}
       - N8N_WEBHOOK_ASK=${N8N_WEBHOOK_ASK}
       - N8N_WEBHOOK_PDF=${N8N_WEBHOOK_PDF}
-      - WHATSAPP_TOKEN=${WHATSAPP_TOKEN}
-      - PHONE_NUMBER_ID=${PHONE_NUMBER_ID}
+
+      - HUGGINGFACE_API_TOKEN=${HUGGINGFACE_API_TOKEN}
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:latest}
     extra_hosts:
@@ -29,7 +33,7 @@ services:
     volumes:
       - ./data:/app/data
     networks:
-      - unlp_network
+      - backend_network
     depends_on:
       - postgres
       - qdrant
@@ -37,6 +41,8 @@ services:
   postgres:
     image: postgres:15
     container_name: postgres
+    profiles:
+      - ""
     ports:
       - "5432:5432"
     environment:
@@ -46,11 +52,13 @@ services:
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
     networks:
-      - unlp_network
+      - backend_network
 
   n8n:
     image: n8nio/n8n:latest
     container_name: n8n
+    profiles:
+      - ""
     ports:
       - "5678:5678"
     environment:
@@ -64,7 +72,7 @@ services:
     volumes:
       - ./n8n/data:/home/node/.n8n
     networks:
-      - unlp_network
+      - backend_network
     depends_on:
       - flask
       - qdrant
@@ -72,14 +80,61 @@ services:
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant
+    profiles:
+      - ""
     ports:
       - "6333:6333"
       - "6334:6334"
     volumes:
       - ./n8n/qdrant_data:/qdrant/storage:z
     networks:
-      - unlp_network
+      - backend_network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    profiles:
+      - llm
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    networks:
+      - llm_network
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+
+  ollama-init:
+    image: curlimages/curl
+    container_name: ollama-init
+    profiles:
+      - llm
+    depends_on:
+      - ollama
+    networks:
+      - llm_network
+    environment:
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:latest}
+      - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo 'Esperando a que Ollama responda...'
+        until curl -s http://ollama:11434/ > /dev/null; do
+          sleep 2
+        done
+        echo "Descargando modelo de chat $$OLLAMA_MODEL ..."
+        curl -s "http://ollama:11434/api/pull" \
+          -d "{\"name\":\"$$OLLAMA_MODEL\",\"stream\":false}"
+        echo "Descargando modelo de embeddings $$OLLAMA_EMBEDDING_MODEL ..."
+        curl -s "http://ollama:11434/api/pull" \
+          -d "{\"name\":\"$$OLLAMA_EMBEDDING_MODEL\",\"stream\":false}"
+        echo 'Listo!'
 
 networks:
-  unlp_network:
+  backend_network:
+    driver: bridge
+  
+  llm_network:
     driver: bridge
