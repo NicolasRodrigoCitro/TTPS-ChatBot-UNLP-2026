@@ -1,0 +1,28 @@
+<ion-footer [translucent]="true">
+  <form (submit)="onSubmitMensaje($event)">
+    <ion-toolbar>
+        <ion-input name="entrada" placeholder="escriba aqui" [(ngModel)]="entradaUsuario"></ion-input>
+
+        <ion-buttons slot="end">
+          <ion-button type="submit">enviar</ion-button>
+        </ion-buttons>
+    </ion-toolbar>
+  </form>
+</ion-footer>
+
+<ion-content [fullscreen]="true">
+  <ion-card>
+    <ion-card-content>
+      <ion-list>
+        @for (mensaje of mensajesChat; track mensaje.hora) {
+          <ion-item>
+            <ion-card-content>
+              <p> {{mensaje.contenido}} </p><br>
+            </ion-card-content>
+            <p align='right'> {{mensaje.hora.toLocaleString()}} </p>
+          </ion-item>
+        }
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
