@@ -1,5 +1,5 @@
 <ion-footer [translucent]="true">
-  <form (submit)="onSubmitMensaje($event)">
+  <form (submit)="onSubmitMensaje($event, afterChat)">
     <ion-toolbar>
         <ion-input name="entrada" placeholder="escriba aqui" [(ngModel)]="entradaUsuario"></ion-input>
 
@@ -13,16 +13,22 @@
 <ion-content [fullscreen]="true">
   <ion-card>
     <ion-card-content>
-      <ion-list>
-        @for (mensaje of mensajesChat; track mensaje.hora) {
-          <ion-item>
+      <ion-list style="message-list">
+        @for (mensaje of mensajesChat; track mensaje.hora; let is_last= $last) {
+          <ion-item class="autor-{{mensaje.autor}}" [attr.autofocus]="is_last ? true : null">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title> {{ mensaje.autor == "chatbot" ? "chatbot" : "tu"}} </ion-card-title>
+            </ion-card-header>
             <ion-card-content>
               <p> {{mensaje.contenido}} </p><br>
+              <p> {{mensaje.hora.toLocaleString()}} </p>
             </ion-card-content>
-            <p align='right'> {{mensaje.hora.toLocaleString()}} </p>
+          </ion-card>
           </ion-item>
         }
       </ion-list>
+      <a #afterChat id="afterChat"></a>
     </ion-card-content>
   </ion-card>
 </ion-content>
