@@ -1,7 +1,13 @@
 <ion-footer [translucent]="true">
   <form (submit)="onSubmitMensaje($event, afterChat)">
     <ion-toolbar>
-        <ion-input name="entrada" placeholder="escriba aqui" [(ngModel)]="entradaUsuario"></ion-input>
+        <ion-input 
+          name="entrada" 
+          placeholder="escriba aqui" 
+          [(ngModel)]="entradaUsuario"
+          [readonly]="estaEnviandoMensaje ? true : null"
+          #entradaMensaje
+        ></ion-input>
 
         <ion-buttons slot="end">
           <ion-button type="submit">enviar</ion-button>
@@ -14,7 +20,11 @@
   <ion-card>
     <ion-card-content>
       <ion-list style="message-list">
-        @for (mensaje of mensajesChat; track mensaje.hora; let is_last= $last) {
+        @for (
+          mensaje of mensajesChat; 
+          track [mensaje.hora, mensaje.autor]; 
+          let is_last= $last
+        ) {
           <ion-item class="autor-{{mensaje.autor}}" [attr.autofocus]="is_last ? true : null">
           <ion-card>
             <ion-card-header>

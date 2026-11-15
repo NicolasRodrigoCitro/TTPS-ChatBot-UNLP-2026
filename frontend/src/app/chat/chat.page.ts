@@ -1,5 +1,8 @@
-import { HttpClient, HttpParams, HttpParameterCodec} from '@angular/common/http';
-import { afterRenderEffect, Component, inject, OnInit } from '@angular/core';
+import { HttpClient, HttpParams, HttpParameterCodec,} from '@angular/common/http';
+import { ChangeDetectorRef, Component, ElementRef, inject, viewChild } from '@angular/core';
+
+import { MessageHttpResponse } from '../tipos_http';
+import { AlertService } from './alert-service';
 
 @Component({
   selector: 'app-chat',
@@ -7,9 +10,12 @@ import { afterRenderEffect, Component, inject, OnInit } from '@angular/core';
   styleUrls: ['./chat.page.scss'],
   standalone: false,
 })
-export class ChatPage implements OnInit {
+export class ChatPage {
+  ref = inject(ChangeDetectorRef);
+  
   http = inject(HttpClient);
-
+  alertSrv = new AlertService();
+  
   mensajesChat = [
     {
       contenido: "hola",
@@ -25,17 +31,81 @@ export class ChatPage implements OnInit {
 
   entradaUsuario = ""
 
+  estaEnviandoMensaje: boolean = false;
+
   constructor() {}
 
-  ngOnInit() {}
+  async onSubmitMensaje(event: Event, elementoAlQueScrollear: HTMLElement) {
+    this.estaEnviandoMensaje = true;
 
-  onSubmitMensaje(event: Event, elementoAlQueScrollear: HTMLElement) {
-    this.mensajesChat.push({
-      contenido: this.entradaUsuario,
-      hora: new Date(),
-      autor: "usuario"
-    });
+    const timeout = 3000;
+    const esperaResp = await this.alertSrv.mostrarCargando("esperando respuesta", timeout);
+    const copiaEntradaUsuario = this.entradaUsuario;
 
+    const onresponse = () => {
+      this.estaEnviandoMensaje = false;
+      esperaResp.dismiss();
+    };
+
+    this.http
+      .post<MessageHttpResponse>("http://localhost:5000/api/v1/chat", 
+        { message: copiaEntradaUsuario},
+        { timeout },
+      )
+      .subscribe({
+        next: (data) => {
+          this.entradaUsuario = "";
+
+          onresponse();
+          
+          this.onRecibioRespuestaDeMensaje(copiaEntradaUsuario, data, elementoAlQueScrollear);
+        },
+        error: (err) => {
+          this.entradaUsuario = copiaEntradaUsuario;
+          onresponse();
+
+          console.log(err);
+          if(err.status == 0) {
+            let msg = 
+                (err.error.name == "TimeoutError")
+              ? "No pudimos procesar tu consulta en este momento"
+              : "Servicio de la facultad fuera de servicio, No pudimos procesar tu consulta en este momento, haga otra consulta o intenteló mas tarde..";
+            this.alertSrv.mostrarAlerta(msg, "error");
+          } else if(err.status == 500) {
+            this.alertSrv.mostrarAlerta("error interno del servidor", "error");
+          } else {
+            this.alertSrv.mostrarAlerta("error desconocido", "error");
+          }
+
+          // sin esto, tarda segundos en actualizar la pagina
+          this.ref.markForCheck();
+        },
+      });
+  }
+
+  onRecibioRespuestaDeMensaje(
+    copiaEntradaUsuario: string, 
+    data: MessageHttpResponse, 
+    elementoAlQueScrollear: HTMLElement,
+  ) {
+    this.mensajesChat = [
+      ...this.mensajesChat,
+      {
+        contenido: copiaEntradaUsuario,
+        hora: new Date(),
+        autor: "usuario"
+      },
+      {
+        contenido: data.response,
+        hora: new Date(),
+        autor: "chatbot"
+      },
+    ];
+
+    // sin esto, tarda segundos en actualizar la pagina
+    this.ref.markForCheck();
+
+    setTimeout(() => elementoAlQueScrollear.scrollIntoView({behavior: 'smooth'}), 200);
     setTimeout(() => elementoAlQueScrollear.scrollIntoView({behavior: 'smooth'}), 500);
   }
 }
