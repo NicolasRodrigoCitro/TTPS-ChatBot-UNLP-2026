@@ -29,16 +29,6 @@ services:
       - ./qdrant_data:/qdrant/storage:z
     networks:
       - unlp_network
-      
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ./ollama_data:/root/.ollama
-    networks:
-      - unlp_network
 
 networks:
   unlp_network:

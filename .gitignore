@@ -68,7 +68,9 @@ n8n/data/
 n8n/qdrant_data/
 n8n/ollama_data/
 
-
+.agents/
+context/
+.vscode/
 
 ollama_data/
 n8n/data/

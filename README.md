@@ -82,6 +82,11 @@ PHONE_NUMBER_ID=tu_phone_id
 docker compose up --build
 ```
 
+### 3.1 (Opcional) Levantar servicio Ollama para inferencia local
+```bash
+docker compose --profile llm up
+```
+
 La primera vez tarda unos minutos porque construye la imagen de Flask e instala las dependencias. Cuando veas estos mensajes todo está corriendo:
 
 ```
@@ -196,8 +201,20 @@ docker compose logs qdrant
 # Parar todos los servicios
 docker compose down
 
+# Parar servicio específico
+docker compose down {servicio}
+
 # Reconstruir la imagen de Flask (después de cambios en el código)
 docker compose up --build flask
+
+# Levantar servicio Ollama (desacoplado del resto del proyecto)
+docker compose --profile llm up
+
+# Bajar servicio Ollama
+# Via perfil
+docker compose --profile llm down
+# Via referencia al servicio
+docker compose down ollama
 ```
 
 ---
