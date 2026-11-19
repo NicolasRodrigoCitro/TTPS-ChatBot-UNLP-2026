@@ -24,6 +24,7 @@ dependencies = [
     "pymupdf4llm (>=0.3.4,<0.4.0)",
     "qdrant-client (>=1.17.0,<2.0.0)",
     "sentence-transformers (>=6.1.0,<7.0.0)",
+    "torch (>=2.0.0)",
 ]
 
 
@@ -35,3 +36,20 @@ build-backend = "poetry.core.masonry.api"
 name = "ttps-chatbot"
 version = "0.1.0"
 package-mode = false
+
+# ==============================================================================
+# CONFIGURACIÓN DE PYTORCH: MODO CPU (POR DEFECTO) VS GPU (NVIDIA CUDA)
+# Evita descargar ~8 GB de librerías NVIDIA/CUDA en entornos sin GPU dedicada.
+#
+# Si el servidor de despliegue cuenta con GPU NVIDIA y CUDA:
+#   1. Comentar las secciones [tool.poetry.dependencies] y [[tool.poetry.source]] de abajo.
+#   2. Regenerar el lockfile: poetry lock
+#   3. Reconstruir contenedores: docker compose up -d --build
+# ==============================================================================
+[tool.poetry.dependencies]
+torch = { source = "pytorch-cpu" }
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
