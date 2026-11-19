@@ -25,7 +25,7 @@ class QdrantService:
                 self.client.create_collection(
                     collection_name=self.collection_name,
                     vectors_config=VectorParams(
-                        size=1024,  # multilingual-e5-large tiene dimensión 1024
+                        size=768,  # multilingual-e5-large tiene dimensión 768
                         distance=Distance.COSINE
                     )
                 )

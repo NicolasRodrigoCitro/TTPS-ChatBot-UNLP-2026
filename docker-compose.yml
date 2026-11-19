@@ -114,7 +114,7 @@ services:
     networks:
       - llm_network
     environment:
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:latest}
+      - OLLAMA_URL=${OLLAMA_URL}
       - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
     command:
       - /bin/sh

@@ -87,25 +87,32 @@ class EmbeddingService:
 
 # Opción alternativa: Usar modelo local (más rápido pero requiere más recursos)
 class LocalEmbeddingService:
-    """Servicio para generar embeddings localmente con sentence-transformers"""
+    """Servicio para generar embeddings localmente usando Ollama"""
     
     def __init__(self):
-        from sentence_transformers import SentenceTransformer
-        print("📥 Cargando modelo de embeddings localmente...")
-        self.model = SentenceTransformer('intfloat/multilingual-e5-large')
-        print("✅ Modelo cargado")
+        self.ollama_url = os.getenv("OLLAMA_URL", "http://172.17.0.1:11434").rstrip("/")
+        self.model = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+        print(f"📥 Usando embeddings locales con Ollama ({self.model})...")
     
     def get_embeddings(self, texts: List[str], batch_size: int = 32, prefix: str = "") -> List[List[float]]:
+        if not texts:
+            return []
         if prefix:
             texts = [f"{prefix}{t}" for t in texts]
-        print(f"🔄 Generando embeddings para {len(texts)} textos...")
-        embeddings = self.model.encode(
-            texts,
-            batch_size=batch_size,
-            show_progress_bar=True,
-            convert_to_numpy=True
-        )
-        return embeddings.tolist()
+        print(f"🔄 Generando embeddings con Ollama para {len(texts)} textos...")
+        
+        all_embeddings = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            response = requests.post(
+                f"{self.ollama_url}/api/embed",
+                json={"model": self.model, "input": batch},
+                timeout=120
+            )
+            response.raise_for_status()
+            all_embeddings.extend(response.json()["embeddings"])
+            
+        return all_embeddings
     
     def get_embedding(self, text: str, prefix: str = "") -> List[float]:
         return self.get_embeddings([text], prefix=prefix)[0]
